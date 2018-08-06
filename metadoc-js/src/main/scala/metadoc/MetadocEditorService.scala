@@ -14,8 +14,11 @@ import monaco.services.IResourceInput
 import monaco.services.IEditorService
 import org.scalajs.dom
 
-class MetadocEditorService(index: MetadocSemanticdbIndex)
+class MetadocEditorService(index: MetadocSemanticdbIndex, fetch: MetadocFetch)
     extends IEditorService {
+
+
+  private lazy val textModelService = new MetadocTextModelService(fetch)
   private lazy val editor: IStandaloneCodeEditor = {
     val app = dom.document.getElementById("editor")
     app.innerHTML = ""
@@ -24,7 +27,7 @@ class MetadocEditorService(index: MetadocSemanticdbIndex)
     options.scrollBeyondLastLine = false
 
     val overrides = jsObject[IEditorOverrideServices]
-    overrides.textModelService = MetadocTextModelService
+    overrides.textModelService =textModelService
     overrides.editorService = this
 
     val editor = monaco.editor.Editor.create(app, options, overrides)
@@ -45,10 +48,7 @@ class MetadocEditorService(index: MetadocSemanticdbIndex)
   def open(input: IResourceInput): Future[IStandaloneCodeEditor] = {
     val selection = input.options.selection
     for {
-      MetadocMonacoDocument(document, model) <- MetadocTextModelService
-        .modelDocument(
-          input.resource
-        )
+      MetadocMonacoDocument(document, model) <- textModelService.modelDocument(input.resource)
     } yield {
       editor.setModel(model.`object`.textEditorModel)
       index.dispatch(MetadocEvent.SetDocument(document))

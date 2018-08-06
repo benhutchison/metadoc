@@ -11,8 +11,10 @@ import monaco.CancellationToken
 import monaco.Position
 import MetadocEnrichments._
 
-class ScalaReferenceProvider(index: MetadocSemanticdbIndex)
+class ScalaReferenceProvider(index: MetadocSemanticdbIndex, fetch: MetadocFetch)
     extends ReferenceProvider {
+  val service = new MetadocTextModelService(fetch)
+
   override def provideReferences(
       model: IReadOnlyModel,
       position: Position,
@@ -29,8 +31,8 @@ class ScalaReferenceProvider(index: MetadocSemanticdbIndex)
             // Create the model for each reference. A reference can come from
             // another file, and we need that file's model in order to get
             // correct range selection.
-            MetadocTextModelService
-              .modelDocument(createUri(filename))
+
+              service.modelDocument(createUri(filename))
               .map {
                 case MetadocMonacoDocument(_, model) =>
                   ranges.ranges.map { r =>

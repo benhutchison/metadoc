@@ -45,11 +45,12 @@ inThisBuild(
 )
 
 lazy val Version = new {
-  def scala = "2.12.4"
+  def scala = "2.12.6"
   def scala210 = "2.10.6"
   def scalameta = "3.7.0"
-  def sbt = "1.1.1"
+  def sbt = "1.2.0"
   def sbt013 = "0.13.17"
+  def circe = "0.9.3"
 }
 
 lazy val allSettings = Seq(
@@ -83,6 +84,25 @@ lazy val example = project
     ),
     test := {} // no need to run paiges tests.
   )
+
+
+lazy val server = project
+  .in(file("metadoc-server"))
+  .disablePlugins(ScriptedPlugin) // sbt/sbt#3514 fixed in sbt 1.2
+  .settings(
+  allSettings,
+  moduleName := "metadoc-server",
+  libraryDependencies ++= List(
+    "io.suzaku" %% "boopickle" % "1.3.0",
+    "com.github.benhutchison" %% "http4s-factor" % "0.3-SNAPSHOT",
+    "org.http4s" %% "http4s-dsl" % "0.19.0-M1",
+    "io.circe" %% "circe-core" % Version.circe,
+    "io.circe" %% "circe-generic" % Version.circe,
+    "io.circe" %% "circe-generic-extras" % Version.circe,
+    "io.circe" %% "circe-parser" % Version.circe,
+//    "com.github.pathikrit" %% "better-files" % "3.0.0"
+  ),
+).dependsOn(coreJVM)
 
 lazy val cli = project
   .in(file("metadoc-cli"))
@@ -178,8 +198,10 @@ lazy val core = crossProject
       baseDirectory.value./("../src/main/protobuf")
     ),
     libraryDependencies ++= List(
+      "io.suzaku" %%% "boopickle" % "1.3.0",
       "org.scalameta" %%% "langmeta" % Version.scalameta,
-      "com.thesamet.scalapb" %%% "scalapb-runtime" % scalapbVersion
+      "com.thesamet.scalapb" %%% "scalapb-runtime" % scalapbVersion,
+
     )
   )
 lazy val coreJVM = core.jvm
@@ -220,7 +242,6 @@ val sbtPlugin = project
       .value,
     sbt.Keys.sbtPlugin := true,
     // scriptedBufferLog := false,
-    scriptedLaunchOpts += "-Dproject.version=" + version.value,
     buildInfoPackage := "metadoc.sbt",
     buildInfoKeys := Seq[BuildInfoKey](
       version,

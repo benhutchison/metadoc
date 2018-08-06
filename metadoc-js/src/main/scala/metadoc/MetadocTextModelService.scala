@@ -13,7 +13,7 @@ import monaco.services.ITextModelService
 import monaco.services.ImmortalReference
 import scala.meta.internal.{semanticdb3 => s}
 
-object MetadocTextModelService extends ITextModelService {
+class MetadocTextModelService(fetch: MetadocFetch) extends ITextModelService {
   def modelReference(
       filename: String
   ): Future[IReference[ITextEditorModel]] =
@@ -36,7 +36,7 @@ object MetadocTextModelService extends ITextModelService {
       Future.successful(document(model))
     } else {
       for {
-        Some(doc) <- MetadocFetch.document(resource.path)
+        Some(doc) <- fetch.document(resource.path)
       } yield {
         val model = Editor.createModel(doc.text, "scala", resource)
         modelDocumentCache(model) = doc

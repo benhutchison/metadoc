@@ -43,11 +43,12 @@ object MetadocApp {
 
     for {
       _ <- loadMonaco()
-      workspace <- MetadocFetch.workspace()
+      fetch <- MetadocFetch.init()
+      workspace <- fetch.workspace()
     } {
-      val index = new MutableBrowserIndex(MetadocState(s.TextDocument()))
-      registerLanguageExtensions(index)
-      val editorService = new MetadocEditorService(index)
+      val index = new MutableBrowserIndex(MetadocState(s.TextDocument()), fetch)
+      registerLanguageExtensions(index, fetch)
+      val editorService = new MetadocEditorService(index, fetch)
 
       dom.ext.LocalStorage("editor-theme").foreach { theme =>
         Editor.setTheme(theme)
@@ -99,7 +100,7 @@ object MetadocApp {
     dom.document.getElementById("title").textContent = title
   }
 
-  def registerLanguageExtensions(index: MetadocSemanticdbIndex): Unit = {
+  def registerLanguageExtensions(index: MetadocSemanticdbIndex, fetch: MetadocFetch): Unit = {
     monaco.languages.Languages.register(ScalaLanguageExtensionPoint)
     monaco.languages.Languages.setMonarchTokensProvider(
       ScalaLanguageExtensionPoint.id,
@@ -111,11 +112,11 @@ object MetadocApp {
     )
     monaco.languages.Languages.registerDefinitionProvider(
       ScalaLanguageExtensionPoint.id,
-      new ScalaDefinitionProvider(index)
+      new ScalaDefinitionProvider(index, fetch)
     )
     monaco.languages.Languages.registerReferenceProvider(
       ScalaLanguageExtensionPoint.id,
-      new ScalaReferenceProvider(index)
+      new ScalaReferenceProvider(index, fetch)
     )
     monaco.languages.Languages.registerDocumentSymbolProvider(
       ScalaLanguageExtensionPoint.id,
@@ -143,17 +144,17 @@ object MetadocApp {
     }
   }
 
-  def fetchBytes(url: String): Future[Array[Byte]] = {
-    for {
-      response <- dom.experimental.Fetch.fetch(url).toFuture
-      _ = require(response.status == 200, s"${response.status} != 200")
-      buffer <- response.arrayBuffer().toFuture
-    } yield {
-      val bytes = Array.ofDim[Byte](buffer.byteLength)
-      TypedArrayBuffer.wrap(buffer).get(bytes)
-      bytes
-    }
-  }
+//  def fetchBytes(url: String): Future[Array[Byte]] = {
+//    for {
+//      response <- dom.experimental.Fetch.fetch(url).toFuture
+//      _ = require(response.status == 200, s"${response.status} != 200")
+//      buffer <- response.arrayBuffer().toFuture
+//    } yield {
+//      val bytes = Array.ofDim[Byte](buffer.byteLength)
+//      TypedArrayBuffer.wrap(buffer).get(bytes)
+//      bytes
+//    }
+//  }
 
   /**
     * Load the Monaco Editor AMD bundle using `require`.

@@ -9,8 +9,10 @@ import monaco.languages.Location
 import monaco.CancellationToken
 import monaco.Position
 
-class ScalaDefinitionProvider(index: MetadocSemanticdbIndex)
+class ScalaDefinitionProvider(index: MetadocSemanticdbIndex, fetch: MetadocFetch)
     extends DefinitionProvider {
+  val service = new MetadocTextModelService(fetch)
+
   override def provideDefinition(
       model: IReadOnlyModel,
       position: Position,
@@ -26,7 +28,7 @@ class ScalaDefinitionProvider(index: MetadocSemanticdbIndex)
           .fold(empty) {
             case Some(defn) =>
               for {
-                model <- MetadocTextModelService.modelReference(defn.filename)
+                model <- service.modelReference(defn.filename)
               } yield {
                 val location =
                   model.`object`.textEditorModel.resolveLocation(defn)
