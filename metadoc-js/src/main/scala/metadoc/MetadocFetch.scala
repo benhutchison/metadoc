@@ -5,7 +5,6 @@ import java.nio._
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent._
 import scala.meta.internal.{semanticdb3 => s}
-import metadoc.MetadocApp._
 import metadoc.{schema => d}
 import org.scalajs.dom._
 
@@ -47,7 +46,7 @@ case class MetadocFetch(socket: WebSocket, fetches: Map[String, Promise[Option[A
       case buffer: ArrayBuffer =>
         val bytes = Array.ofDim[Byte](buffer.byteLength)
         TypedArrayBuffer.wrap(buffer).get(bytes)
-        val fetchResponse = Unpickle[FetchResponse].fromBytes(ByteBuffer.wrap(bytes))
+        val fetchResponse = Unpickle.apply[FetchResponse].fromBytes(ByteBuffer.wrap(bytes))
         fetches.remove(fetchResponse.path).foreach(prom => prom.success(fetchResponse.optData))
       case other =>
         println(s"WS msg is not an ArrayBuffer. ignoring: $other")
@@ -69,7 +68,7 @@ case class MetadocFetch(socket: WebSocket, fetches: Map[String, Promise[Option[A
   }
 
   def symbol(symbolId: String): Future[Option[d.SymbolIndex]] = {
-    val url = "symbol/" + JSSha512.sha512(symbolId)
+    val url = "symbol/" + symbolId
     for {
       optBytes <- fetchByter(url)
     } yield {
