@@ -18,7 +18,7 @@ class MetadocEditorService(index: MetadocSemanticdbIndex, fetch: MetadocFetch)
     extends IEditorService {
 
 
-  private lazy val textModelService = new MetadocTextModelService(fetch)
+  private val textModelService = new MetadocTextModelService(fetch)
   private lazy val editor: IStandaloneCodeEditor = {
     val app = dom.document.getElementById("editor")
     app.innerHTML = ""
